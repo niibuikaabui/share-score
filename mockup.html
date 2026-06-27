@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スコアボード モックアップ</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    /* ── モックアップ切替ナビ ── */
+    .mockup-nav {
+      background: #020617;
+      border-bottom: 1px solid #1e293b;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    .mockup-nav span { color: #475569; }
+    .mockup-nav button {
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .mockup-nav button.active {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ════════════════════════
+       ① 作成画面
+    ════════════════════════ */
+    .home-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 42px);
+      padding: 40px 24px;
+    }
+    .home-card {
+      width: 100%;
+      max-width: 420px;
+    }
+    .home-hero {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .home-icon { font-size: 52px; margin-bottom: 12px; }
+    .home-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .home-sub { font-size: 14px; color: #64748b; }
+
+    .team-setup {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .team-setup-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .team-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      flex-shrink: 0;
+    }
+    .team-setup-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .field-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 9px;
+      color: #f1f5f9;
+      font-size: 15px;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    .field-input:focus { border-color: #3b82f6; }
+
+    /* カラーピッカー */
+    .color-label {
+      font-size: 11px;
+      color: #475569;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2.5px solid transparent;
+      transition: transform 0.1s, border-color 0.1s;
+      flex-shrink: 0;
+    }
+    .swatch:hover { transform: scale(1.15); }
+    .swatch.selected {
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.25);
+      transform: scale(1.1);
+    }
+
+    .vs-row {
+      text-align: center;
+      font-size: 13px;
+      color: #334155;
+      letter-spacing: 0.1em;
+      margin: 8px 0;
+    }
+
+    .btn-create {
+      width: 100%;
+      padding: 15px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.15s;
+    }
+    .btn-create:hover { background: #2563eb; }
+    .home-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #334155;
+      line-height: 1.8;
+      text-align: center;
+    }
+
+    /* ════════════════════════
+       ② 編集 / ③ 閲覧 共通
+    ════════════════════════ */
+    .board-wrap {
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    .board-top {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .view-badge {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #64748b;
+      font-size: 11px;
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+      letter-spacing: 0.05em;
+    }
+    .match-label {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+    .set-label {
+      font-size: 22px;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    /* スコア本体 */
+    .teams-grid {
+      display: grid;
+      grid-template-columns: 1fr 32px 1fr;
+      align-items: start;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .team { text-align: center; }
+    .team-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      min-height: 24px;
+    }
+    .score-num {
+      font-size: 96px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -4px;
+      margin-bottom: 14px;
+    }
+    .set-dots {
+      display: flex;
+      gap: 7px;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 1.5px solid #334155;
+    }
+    .dots-label { font-size: 11px; color: #475569; }
+
+    /* +/- ボタン */
+    .score-btns {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .btn-sc {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: none;
+      font-size: 26px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .btn-plus { background: #22c55e; color: #fff; }
+    .btn-minus { background: #1e293b; color: #64748b; }
+
+    .colon {
+      font-size: 64px;
+      font-weight: 300;
+      color: #334155;
+      text-align: center;
+      padding-top: 40px;
+    }
+
+    /* セット履歴 */
+    .history-box {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+    .history-title {
+      font-size: 11px;
+      color: #475569;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .history-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #0f172a;
+    }
+    .history-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .history-set-name {
+      font-size: 12px;
+      color: #475569;
+      width: 44px;
+      flex-shrink: 0;
+    }
+    .history-scores {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .hs-num {
+      font-size: 22px;
+      font-weight: 800;
+      min-width: 36px;
+      text-align: center;
+    }
+    .hs-num.lose  { color: #334155; }
+    .hs-num.cur   { color: #94a3b8; }
+    .hs-sep { color: #334155; font-size: 14px; }
+    .history-winner {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+    .hw-cur { background: #0f172a; color: #475569; font-size: 11px; }
+
+    /* アクションボタン */
+    .board-actions { display: flex; gap: 12px; }
+    .btn-copy {
+      flex: 1;
+      padding: 13px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-next {
+      flex: 1;
+      padding: 13px;
+      background: #3b82f6;
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .url-display {
+      margin-top: 20px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .url-type {
+      font-size: 10px;
+      color: #334155;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .url-text { font-size: 12px; color: #475569; word-break: break-all; }
+
+    .auto-refresh {
+      text-align: center;
+      font-size: 12px;
+      color: #334155;
+      margin-top: 20px;
+    }
+    .pulse {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+      vertical-align: middle;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── モックアップ切替 ── -->
+<div class="mockup-nav">
+  <span>画面切替 ▶</span>
+  <button class="active" onclick="showScreen('home', this)">① 作成</button>
+  <button onclick="showScreen('edit', this)">② 編集（管理者）</button>
+  <button onclick="showScreen('view', this)">③ 閲覧（共有）</button>
+</div>
+
+<!-- ══════════════════════════════════
+     ① 作成画面
+══════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-wrap">
+    <div class="home-card">
+      <div class="home-hero">
+        <div class="home-icon">🏐</div>
+        <div class="home-title">スコアボード</div>
+        <div class="home-sub">バレーボール 3セットマッチ</div>
+      </div>
+
+      <!-- チームA -->
+      <div class="team-setup">
+        <div class="team-setup-header">
+          <div class="team-badge" id="badge-a" style="background:#ef4444;">A</div>
+          <div class="team-setup-label">チーム A</div>
+        </div>
+        <input class="field-input" type="text" id="name-a" value="レッドチーム" placeholder="チーム名">
+        <div class="color-label">チームカラー</div>
+        <div class="color-swatches" id="swatches-a"></div>
+      </div>
+
+      <div class="vs-row">— VS —</div>
+
+      <!-- チームB -->
+      <div class="team-setup">
+        <div class="team-setup-header">
+          <div class="team-badge" id="badge-b" style="background:#3b82f6;">B</div>
+          <div class="team-setup-label">チーム B</div>
+        </div>
+        <input class="field-input" type="text" id="name-b" value="ブルーチーム" placeholder="チーム名">
+        <div class="color-label">チームカラー</div>
+        <div class="color-swatches" id="swatches-b"></div>
+      </div>
+
+      <button class="btn-create" onclick="createBoard()">スコアボードを作成 →</button>
+
+      <div class="home-note">
+        作成後に編集URL（管理者用）と閲覧URL（共有用）が発行されます。<br>
+        スコアボードは作成から <strong style="color:#64748b;">3日後</strong> に自動削除されます。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ② 編集画面（管理者）
+══════════════════════════════════ -->
+<div id="screen-edit" class="screen">
+  <div class="board-wrap">
+
+    <div class="board-top">
+      <div class="match-label">3セットマッチ</div>
+      <div class="set-label">第 3 セット</div>
+    </div>
+
+    <div class="teams-grid">
+      <!-- チームA -->
+      <div class="team" id="board-team-a">
+        <div class="team-name" id="board-name-a">レッドチーム</div>
+        <div class="score-num" id="board-score-a">8</div>
+        <div class="set-dots" id="board-dots-a">
+          <div class="dot won"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="dots-label">1セット取得</div>
+        <div class="score-btns">
+          <button class="btn-sc btn-minus">−</button>
+          <button class="btn-sc btn-plus">＋</button>
+        </div>
+      </div>
+
+      <div class="colon">:</div>
+
+      <!-- チームB -->
+      <div class="team" id="board-team-b">
+        <div class="team-name" id="board-name-b">ブルーチーム</div>
+        <div class="score-num" id="board-score-b">5</div>
+        <div class="set-dots" id="board-dots-b">
+          <div class="dot won"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="dots-label">1セット取得</div>
+        <div class="score-btns">
+          <button class="btn-sc btn-minus">−</button>
+          <button class="btn-sc btn-plus">＋</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- セット履歴 -->
+    <div class="history-box">
+      <div class="history-title">セット履歴</div>
+      <div class="history-row">
+        <div class="history-set-name">SET 1</div>
+        <div class="history-scores">
+          <span class="hs-num hs-win-a">25</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num lose">20</span>
+        </div>
+        <span class="history-winner hs-badge-a" id="hw1"></span>
+      </div>
+      <div class="history-row">
+        <div class="history-set-name">SET 2</div>
+        <div class="history-scores">
+          <span class="hs-num lose">23</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num hs-win-b">25</span>
+        </div>
+        <span class="history-winner hs-badge-b" id="hw2"></span>
+      </div>
+      <div class="history-row" style="opacity:0.6;">
+        <div class="history-set-name">SET 3</div>
+        <div class="history-scores">
+          <span class="hs-num cur">8</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num cur">5</span>
+        </div>
+        <span class="history-winner hw-cur">進行中</span>
+      </div>
+    </div>
+
+    <div class="board-actions">
+      <button class="btn-copy">📋 閲覧URLをコピー</button>
+      <button class="btn-next">セット終了 →</button>
+    </div>
+
+    <div class="url-display">
+      <div class="url-type">編集URL（このページのURL）</div>
+      <div class="url-text">https://share-score.vercel.app/edit/x7k2p/<wbr>edit-abc123xyz</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ③ 閲覧画面（共有URL）
+══════════════════════════════════ -->
+<div id="screen-view" class="screen">
+  <div class="board-wrap">
+
+    <div class="board-top">
+      <div><span class="view-badge">👁 閲覧のみ</span></div>
+      <div class="match-label">3セットマッチ</div>
+      <div class="set-label">第 3 セット</div>
+    </div>
+
+    <div class="teams-grid">
+      <div class="team" id="view-team-a">
+        <div class="team-name" id="view-name-a">レッドチーム</div>
+        <div class="score-num" id="view-score-a">8</div>
+        <div class="set-dots" id="view-dots-a">
+          <div class="dot won"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="dots-label">1セット取得</div>
+      </div>
+
+      <div class="colon">:</div>
+
+      <div class="team" id="view-team-b">
+        <div class="team-name" id="view-name-b">ブルーチーム</div>
+        <div class="score-num" id="view-score-b">5</div>
+        <div class="set-dots" id="view-dots-b">
+          <div class="dot won"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div class="dots-label">1セット取得</div>
+      </div>
+    </div>
+
+    <div class="history-box">
+      <div class="history-title">セット履歴</div>
+      <div class="history-row">
+        <div class="history-set-name">SET 1</div>
+        <div class="history-scores">
+          <span class="hs-num hs-win-a">25</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num lose">20</span>
+        </div>
+        <span class="history-winner hs-badge-a" id="vhw1"></span>
+      </div>
+      <div class="history-row">
+        <div class="history-set-name">SET 2</div>
+        <div class="history-scores">
+          <span class="hs-num lose">23</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num hs-win-b">25</span>
+        </div>
+        <span class="history-winner hs-badge-b" id="vhw2"></span>
+      </div>
+      <div class="history-row" style="opacity:0.6;">
+        <div class="history-set-name">SET 3</div>
+        <div class="history-scores">
+          <span class="hs-num cur">8</span>
+          <span class="hs-sep">−</span>
+          <span class="hs-num cur">5</span>
+        </div>
+        <span class="history-winner hw-cur">進行中</span>
+      </div>
+    </div>
+
+    <div class="auto-refresh">
+      <span class="pulse"></span>2秒ごとに自動更新
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── 10色パレット ──
+  const COLORS = [
+    { hex: '#ef4444', name: 'レッド' },
+    { hex: '#f97316', name: 'オレンジ' },
+    { hex: '#eab308', name: 'イエロー' },
+    { hex: '#22c55e', name: 'グリーン' },
+    { hex: '#06b6d4', name: 'シアン' },
+    { hex: '#3b82f6', name: 'ブルー' },
+    { hex: '#6366f1', name: 'インディゴ' },
+    { hex: '#a855f7', name: 'パープル' },
+    { hex: '#ec4899', name: 'ピンク' },
+    { hex: '#f1f5f9', name: 'ホワイト' },
+  ];
+
+  // デフォルト選択
+  let selectedA = COLORS[0]; // レッド
+  let selectedB = COLORS[5]; // ブルー
+
+  // ── スウォッチ描画 ──
+  function buildSwatches(containerId, team) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    const current = team === 'a' ? selectedA : selectedB;
+    COLORS.forEach(c => {
+      const sw = document.createElement('div');
+      sw.className = 'swatch' + (c.hex === current.hex ? ' selected' : '');
+      sw.style.background = c.hex;
+      sw.title = c.name;
+      sw.onclick = () => pickColor(team, c);
+      el.appendChild(sw);
+    });
+  }
+
+  function pickColor(team, color) {
+    if (team === 'a') selectedA = color;
+    else selectedB = color;
+    buildSwatches('swatches-a', 'a');
+    buildSwatches('swatches-b', 'b');
+    applyColors();
+  }
+
+  // ── カラー適用 ──
+  function applyColors() {
+    const ca = selectedA.hex;
+    const cb = selectedB.hex;
+
+    // バッジ
+    document.getElementById('badge-a').style.background = ca;
+    document.getElementById('badge-b').style.background = cb;
+    // バッジ文字色：明るい色は黒文字
+    document.getElementById('badge-a').style.color = isLight(ca) ? '#0f172a' : '#fff';
+    document.getElementById('badge-b').style.color = isLight(cb) ? '#0f172a' : '#fff';
+
+    // スコア数字
+    setColor('.score-num', ca, cb);
+    // 獲得ドット
+    applyDotColors(ca, cb);
+    // セット履歴 勝者スコア
+    setColor('.hs-win-a', ca, null);
+    setColor('.hs-win-b', null, cb);
+    // セット履歴 勝者バッジ
+    applyBadgeColors(ca, cb);
+
+    // チーム名表示
+    const nameA = document.getElementById('name-a').value || 'チームA';
+    const nameB = document.getElementById('name-b').value || 'チームB';
+    document.querySelectorAll('#board-name-a, #view-name-a').forEach(e => e.textContent = nameA);
+    document.querySelectorAll('#board-name-b, #view-name-b').forEach(e => e.textContent = nameB);
+    document.querySelectorAll('#hw1, #vhw1').forEach(e => e.textContent = nameA.slice(0,4));
+    document.querySelectorAll('#hw2, #vhw2').forEach(e => e.textContent = nameB.slice(0,4));
+  }
+
+  function setColor(selector, colorA, colorB) {
+    document.querySelectorAll(selector).forEach(el => {
+      if (colorA && (el.closest('#board-team-a') || el.closest('#view-team-a'))) {
+        el.style.color = colorA;
+      }
+      if (colorB && (el.closest('#board-team-b') || el.closest('#view-team-b'))) {
+        el.style.color = colorB;
+      }
+      if (!el.closest('.team')) {
+        // history nums - set class-based
+        if (el.classList.contains('hs-win-a') && colorA) el.style.color = colorA;
+        if (el.classList.contains('hs-win-b') && colorB) el.style.color = colorB;
+      }
+    });
+  }
+
+  function applyDotColors(ca, cb) {
+    ['board-dots-a', 'view-dots-a'].forEach(id => {
+      document.querySelectorAll('#' + id + ' .dot.won').forEach(d => {
+        d.style.background = ca;
+        d.style.borderColor = ca;
+      });
+    });
+    ['board-dots-b', 'view-dots-b'].forEach(id => {
+      document.querySelectorAll('#' + id + ' .dot.won').forEach(d => {
+        d.style.background = cb;
+        d.style.borderColor = cb;
+      });
+    });
+  }
+
+  function applyBadgeColors(ca, cb) {
+    document.querySelectorAll('.hs-badge-a').forEach(el => {
+      el.style.background = ca + '22';
+      el.style.color = ca;
+    });
+    document.querySelectorAll('.hs-badge-b').forEach(el => {
+      el.style.background = cb + '22';
+      el.style.color = cb;
+    });
+    document.querySelectorAll('.hs-win-a').forEach(el => el.style.color = ca);
+    document.querySelectorAll('.hs-win-b').forEach(el => el.style.color = cb);
+  }
+
+  // 明度チェック（バッジ文字色用）
+  function isLight(hex) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return (r*299 + g*587 + b*114) / 1000 > 160;
+  }
+
+  // ── 画面切替 ──
+  function showScreen(name, btn) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.mockup-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    applyColors();
+  }
+
+  function createBoard() {
+    showScreen('edit', null);
+    document.querySelectorAll('.mockup-nav button')[1].classList.add('active');
+  }
+
+  // ── 初期化 ──
+  buildSwatches('swatches-a', 'a');
+  buildSwatches('swatches-b', 'b');
+  applyColors();
+
+  // 入力変更をリアルタイム反映
+  document.getElementById('name-a').addEventListener('input', applyColors);
+  document.getElementById('name-b').addEventListener('input', applyColors);
+</script>
+
+</body>
+</html>

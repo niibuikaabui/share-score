@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\claude-cowork\\\\share-score\"; npm install @vercel/blob 2>&1; Move-Item \"$env:TEMP\\\\mockup_backup.html\" \"mockup.html\")",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s -X POST http://localhost:3000/api/board -H 'Content-Type: application/json' -d '{\"teamNames\":[\"レッドチーム\",\"ブルーチーム\"],\"teamColors\":[\"#ef4444\",\"#3b82f6\"]}')",
+      "Bash(curl -s http://localhost:3000/api/board/1e1d7b54)",
+      "Bash(curl -s -X POST http://localhost:3000/api/board -H 'Content-Type: application/json' -d '{\"teamNames\":[\"TeamRed\",\"TeamBlue\"],\"teamColors\":[\"#ef4444\",\"#3b82f6\"]}')",
+      "Bash(tee /tmp/board.json)",
+      "Bash(curl -s http://localhost:3000/api/board/24d45daa)",
+      "Bash(curl -s -X PUT http://localhost:3000/api/board/24d45daa -H 'Content-Type: application/json' -d '{\"editKey\":\"a69ddc8316721ed3\",\"action\":\"score_up\",\"teamIndex\":0}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Scores:', d['currentScores']\\)\")",
+      "Bash(curl -s -X PUT http://localhost:3000/api/board/24d45daa -H 'Content-Type: application/json' -d '{\"editKey\":\"a69ddc8316721ed3\",\"action\":\"score_up\",\"teamIndex\":1}')",
+      "Bash(curl -s -X PUT http://localhost:3000/api/board/24d45daa -H 'Content-Type: application/json' -d '{\"editKey\":\"a69ddc8316721ed3\",\"action\":\"end_set\"}')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X PUT http://localhost:3000/api/board/24d45daa -H 'Content-Type: application/json' -d '{\"editKey\":\"wrongkey\",\"action\":\"score_up\",\"teamIndex\":0}')"
+    ]
+  }
+}
