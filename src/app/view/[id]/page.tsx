@@ -23,7 +23,7 @@ export default function ViewPage() {
     };
 
     fetchBoard();
-    const interval = setInterval(fetchBoard, 2000);
+    const interval = setInterval(fetchBoard, 3000);
     return () => clearInterval(interval);
   }, [id]);
 

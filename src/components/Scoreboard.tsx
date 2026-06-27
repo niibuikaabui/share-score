@@ -8,6 +8,7 @@ interface EditCallbacks {
   onCopyUrl: () => void;
   copied: boolean;
   editUrl: string;
+  viewUrl: string;
 }
 
 interface Props {
@@ -218,9 +219,15 @@ export default function Scoreboard({ board, editCallbacks }: Props) {
               </button>
             )}
           </div>
-          <div style={S.urlBox}>
-            <p style={S.urlLabel}>編集URL（このページのURL）</p>
-            <p style={S.urlText}>{editCallbacks.editUrl}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ ...S.urlBox, borderColor: '#22c55e33' }}>
+              <p style={{ ...S.urlLabel, color: '#22c55e' }}>閲覧URL（スコアボードの共有用）</p>
+              <p style={S.urlText}>{editCallbacks.viewUrl}</p>
+            </div>
+            <div style={S.urlBox}>
+              <p style={S.urlLabel}>編集URL（このページのURL）</p>
+              <p style={S.urlText}>{editCallbacks.editUrl}</p>
+            </div>
           </div>
         </>
       )}
@@ -233,7 +240,7 @@ export default function Scoreboard({ board, editCallbacks }: Props) {
             background: '#22c55e', marginRight: 6, verticalAlign: 'middle',
             animation: 'pulse 2s infinite',
           }} />
-          2秒ごとに自動更新
+          3秒ごとに自動更新
         </p>
       )}
     </div>

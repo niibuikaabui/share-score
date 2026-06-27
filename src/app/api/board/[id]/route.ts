@@ -16,7 +16,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const board = await getBoard(id);
   if (!board) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const { editKey, action, teamIndex } = await req.json();
+  const { editKey, action, teamIndex, scores } = await req.json();
   if (editKey !== board.editKey) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
@@ -25,6 +25,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   switch (action) {
+    case 'set_scores':
+      if (Array.isArray(scores) && scores.length === 2) {
+        board.currentScores = [
+          Math.max(0, Math.min(99, Math.round(Number(scores[0])))),
+          Math.max(0, Math.min(99, Math.round(Number(scores[1])))),
+        ];
+      }
+      break;
     case 'score_up':
       if (teamIndex === 0 || teamIndex === 1)
         board.currentScores[teamIndex] = Math.min(99, board.currentScores[teamIndex] + 1);
