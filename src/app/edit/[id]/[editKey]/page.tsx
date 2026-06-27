@@ -28,10 +28,10 @@ export default function EditPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [copied, setCopied] = useState(false);
 
-  // ローカルスコアをrefで管理（キュー内でも最新値を参照するため）
+  // ローカルスコアをrefで管理（タイマー内でも最新値を参照するため）
   const localScoresRef = useRef<[number, number]>([0, 0]);
-  // シリアルキュー：APIコールを1本ずつ順番に実行（競合書き込みを防止）
-  const queueRef = useRef<Promise<void>>(Promise.resolve());
+  // 200msデバウンスタイマー：連打を積算して1回だけAPIへ送信
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(`/api/board/${id}`)
@@ -44,32 +44,38 @@ export default function EditPage() {
       .catch(() => setStatus('error'));
   }, [id]);
 
-  // スコアをキューに積んで即座に送信（前のリクエストが終わってから実行）
-  const enqueueScoreUpdate = useCallback((scores: [number, number]) => {
-    queueRef.current = queueRef.current.then(async () => {
-      try {
-        await fetch(`/api/board/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ editKey, action: 'set_scores', scores }),
-        });
-      } catch {
-        // ネットワークエラーは無視（ローカル表示は正しいまま）
-      }
-    });
+  const sendScores = useCallback(async (scores: [number, number]) => {
+    try {
+      await fetch(`/api/board/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ editKey, action: 'set_scores', scores }),
+      });
+    } catch { /* ネットワークエラーは無視 */ }
   }, [id, editKey]);
 
   const handleScoreChange = (teamIndex: 0 | 1, delta: 1 | -1) => {
+    // ローカル表示は即座に更新
     const scores: [number, number] = [localScoresRef.current[0], localScoresRef.current[1]];
     scores[teamIndex] = Math.max(0, Math.min(99, scores[teamIndex] + delta));
     localScoresRef.current = scores;
     setBoard(prev => prev ? { ...prev, currentScores: scores } : prev);
-    enqueueScoreUpdate(scores);
+
+    // 連打を積算し、最後の押下から200ms後に最新の絶対値スコアを1回だけ送信
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      sendScores(localScoresRef.current);
+    }, 200);
   };
 
   const handleEndSet = async () => {
-    // キューに積まれたスコア更新がすべて完了してからセット終了を実行
-    await queueRef.current;
+    // 保留中のスコア送信があれば即フラッシュ
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+      await sendScores(localScoresRef.current);
+    }
     const res = await fetch(`/api/board/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
