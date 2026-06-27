@@ -11,20 +11,45 @@ export default function ViewPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
 
   useEffect(() => {
-    const fetchBoard = async () => {
-      try {
-        const res = await fetch(`/api/board/${id}`);
-        if (!res.ok) { setStatus('error'); return; }
-        setBoard(await res.json());
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let mounted = true;
+
+    const connect = () => {
+      if (!mounted) return;
+      es = new EventSource(`/api/board/${id}/stream`);
+
+      // サーバーからスコアデータが届いたら即座に反映
+      es.onmessage = (event) => {
+        if (!mounted) return;
+        setBoard(JSON.parse(event.data) as PublicBoard);
         setStatus('ok');
-      } catch {
+      };
+
+      // ボードが存在しない場合
+      es.addEventListener('notfound', () => {
+        if (!mounted) return;
         setStatus('error');
-      }
+        es?.close();
+        es = null;
+      });
+
+      // 接続が切れたら（Vercelのタイムアウト等）自動再接続
+      es.onerror = () => {
+        if (!mounted) return;
+        es?.close();
+        es = null;
+        reconnectTimer = setTimeout(connect, 2000);
+      };
     };
 
-    fetchBoard();
-    const interval = setInterval(fetchBoard, 3000);
-    return () => clearInterval(interval);
+    connect();
+
+    return () => {
+      mounted = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      es?.close();
+    };
   }, [id]);
 
   if (status === 'loading') {

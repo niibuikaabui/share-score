@@ -240,7 +240,7 @@ export default function Scoreboard({ board, editCallbacks }: Props) {
             background: '#22c55e', marginRight: 6, verticalAlign: 'middle',
             animation: 'pulse 2s infinite',
           }} />
-          3秒ごとに自動更新
+          リアルタイム更新中
         </p>
       )}
     </div>

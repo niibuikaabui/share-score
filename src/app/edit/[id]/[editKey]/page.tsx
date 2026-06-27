@@ -28,9 +28,10 @@ export default function EditPage() {
   const [status, setStatus] = useState<'loading' | 'error' | 'ok'>('loading');
   const [copied, setCopied] = useState(false);
 
-  // スコアをrefで管理（タイマー内でも最新値を参照するため）
+  // ローカルスコアをrefで管理（キュー内でも最新値を参照するため）
   const localScoresRef = useRef<[number, number]>([0, 0]);
-  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // シリアルキュー：APIコールを1本ずつ順番に実行（競合書き込みを防止）
+  const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     fetch(`/api/board/${id}`)
@@ -43,28 +44,18 @@ export default function EditPage() {
       .catch(() => setStatus('error'));
   }, [id]);
 
-  // 3秒に1回だけサーバーへスコアを同期するスロットリング
-  const scheduleSync = useCallback(() => {
-    if (syncTimerRef.current) return; // すでにタイマー待機中
-    syncTimerRef.current = setTimeout(async () => {
-      syncTimerRef.current = null;
-      await fetch(`/api/board/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ editKey, action: 'set_scores', scores: localScoresRef.current }),
-      });
-    }, 3000);
-  }, [id, editKey]);
-
-  // 保留中のスコア同期をすぐに実行する（end_set前に使用）
-  const flushSync = useCallback(async () => {
-    if (!syncTimerRef.current) return;
-    clearTimeout(syncTimerRef.current);
-    syncTimerRef.current = null;
-    await fetch(`/api/board/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ editKey, action: 'set_scores', scores: localScoresRef.current }),
+  // スコアをキューに積んで即座に送信（前のリクエストが終わってから実行）
+  const enqueueScoreUpdate = useCallback((scores: [number, number]) => {
+    queueRef.current = queueRef.current.then(async () => {
+      try {
+        await fetch(`/api/board/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ editKey, action: 'set_scores', scores }),
+        });
+      } catch {
+        // ネットワークエラーは無視（ローカル表示は正しいまま）
+      }
     });
   }, [id, editKey]);
 
@@ -73,12 +64,12 @@ export default function EditPage() {
     scores[teamIndex] = Math.max(0, Math.min(99, scores[teamIndex] + delta));
     localScoresRef.current = scores;
     setBoard(prev => prev ? { ...prev, currentScores: scores } : prev);
-    scheduleSync();
+    enqueueScoreUpdate(scores);
   };
 
   const handleEndSet = async () => {
-    // 未送信のスコアがあれば先に送る
-    await flushSync();
+    // キューに積まれたスコア更新がすべて完了してからセット終了を実行
+    await queueRef.current;
     const res = await fetch(`/api/board/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
